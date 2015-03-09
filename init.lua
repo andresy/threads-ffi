@@ -36,6 +36,11 @@ function Threads:__call(N, ...)
    local self = {N=N, endcallbacks={n=0}, errors={}}
    local funcs = {...}
    
+   local M = N -- size of queues
+   if torch.type(funcs[1]) == 'number' then
+      M = table.remove(funcs,1)
+   end
+   
    if #funcs == 0 then
       funcs = {function() end}
    end
@@ -44,8 +49,8 @@ function Threads:__call(N, ...)
 
    setmetatable(self, {__index=Threads})
 
-   self.mainworker = Worker(N)
-   self.threadworker = Worker(N)
+   self.mainworker = Worker(M)
+   self.threadworker = Worker(M)
 
    self.threads = {}
    for i=1,N do
@@ -157,6 +162,10 @@ function Threads:addjob(callback, endcallback, ...) -- endcallback is passed wit
    end
 
    self.threadworker:addjob(func, ...)
+end
+
+function Threads:isEmpty()
+   return not (self.mainworker.runningjobs > 0 or self.threadworker.runningjobs > 0 or self.endcallbacks.n > 0)
 end
 
 function Threads:synchronize()
