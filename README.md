@@ -368,3 +368,25 @@ This function serializes function `func`. It returns
 ### [obj] serialize.load(code_p, sz) ###
 This function unserializes the outputs of a [serialize.save](#serialize.save).
 The unserialized object `obj` is returned.
+
+<a name='sharedserialize'/>
+### Shared Serialize ###
+
+Often times, we need to communicate [torch.Tensors](https://github.com/torch/torch7/blob/master/doc/tensor.md) 
+between threads without actually serializing the underlying data. Instead we 
+usually just serialize/deserialize the pointer to the data and the Tensor metadata, 
+which is much more efficient. 
+
+For convenience, the _threads_ library provides an alternative sub-package
+with the same API as `threads.serialize`, which automatically incorporates
+this behavior:
+
+```lua
+serialize = require 'threads.sharedserialize'
+```
+
+In effect this adds transparent Tensor sharing between threads.
+Note that Tensor reference counts are_not thread safe (yet), 
+so you have to know what you are doing when using this option. For example,
+make sure different threads don't try to read or write to a Tensor 
+shared by both at the same time.
