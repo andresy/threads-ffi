@@ -275,21 +275,25 @@ end
 
 local result -- upvalue
 local function endcallback(res)
-  result = res
+   result = res
 end
 
-local function get()
-  while thread:acceptsJob() do -- fill the queue as much as can be
-    thread:asyncaddjob(job, endcallback) -- async version (doesn't call dojob)
-  end
- thread:dojob() -- endcallback is executed and fill result ; result is ready!
- return result
-end
-
--- and finally
-while true do
-  local result = get() -- get stuff from threads pool
-  dosomethingwith(result) -- do something in main (this) thread
+nPut = 0
+nGet = 0
+maxJobs = 77 -- some arbitrary predefined number of jobs to execute
+while nGet < maxJobs do
+   while nPut < maxJobs and thread:acceptsJob() do -- fill the queue as much as can be
+     thread:asyncaddjob(job, endcallback) -- async version (doesn't call dojob)
+     nPut = nPut + 1
+   end
+   if threads:hasjob() then -- make sure that there is something to do
+      threads:dojob() -- endcallback is executed and fill result ; result is ready!
+      nGet = nGet + 1
+      if threads:haserror() then -- note that dojob() does not (and will not) check for errors
+         threads:synchronize() -- finishes everything and throws error
+      end
+      dosomethingwith(result) -- do something in main (this) thread with result
+   end
 end
 ```
 
@@ -307,6 +311,11 @@ a call to `addjob`.
 This method returns true when the Threads pool can still accept jobs, 
 i.e. if the `threadworker` [Worker](#worker) (the thread-safe queue 
 of tasks to be executed by threads in the pool) isn't full.
+
+<a name='threads.hasjob'/>
+### Threads:hasjob() ###
+Returns true if there are any jobs in the Threads pool that haven't yet 
+had their `endcallback` executed via a call to [dojob](#threads.dojob).
 
 <a name='threads.synchronize'/>
 ### Threads:synchronize() ###
