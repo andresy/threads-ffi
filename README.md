@@ -220,9 +220,12 @@ with the optional `...` arguments.
 The `endcallback` is a function that will be executed in the main thread
 (the one calling this method). It defaults to `function() end`. 
 
-This method will return immediately, unless the [Worker](#worker) queue 
-is full, in which case it will wait (i.e. block) until one of the worker 
-threads retrieves a new job from the queue.
+Unlike [addjobasync](#threads.addjobasync), this method will internally 
+call [dojob](#threads.dojob) until the `threadworker` 
+[Worker](#worker) is ready to accept more jobs (see [acceptsjobs](#threads.acceptsjobs)).
+This is to prevent `addjob` to be called when both the `threadworker` and 
+`mainworker` are full, such that adding a job to the `threadworker` would
+cause a deadlock (i.e. the function call would block indefinitely).
 
 Before being executed in the worker thread, the `callback` and its 
 optional `...` arguments are serialized 
@@ -255,6 +258,41 @@ In this case a value of `1` is received by the main thread as argument `inc` to 
 demonstrates how communication between threads is easily achieved using 
 the `addjob` method. 
 
+<a name='threads.addjobasync'/>
+### Threads:addjobasync(callback, [endcallback, ...]) ###
+This method is the asynchronous version of [addjob](#threads.addjob).
+However, unlike `addjob`, this method _will not_ internally 
+call [dojob](#threads.dojob) when `threadworker` is full.
+To prevent deadlocks, calls to `addjobasync` can be preceded by a call 
+to [acceptsjobs](#threads.acceptsjobs) to verify that the `threadworker`
+can still accept jobs.
+
+Here is can example of how this method can be used:
+```lua
+local function job()
+   -- stuff to do in a thread
+end
+
+local result -- upvalue
+local function endcallback(res)
+  result = res
+end
+
+local function get()
+  while thread:acceptsJob() do -- fill the queue as much as can be
+    thread:asyncaddjob(job, endcallback) -- async version (doesn't call dojob)
+  end
+ thread:dojob() -- endcallback is executed and fill result ; result is ready!
+ return result
+end
+
+-- and finally
+while true do
+  local result = get() -- get stuff from threads pool
+  dosomethingwith(result) -- do something in main (this) thread
+end
+```
+
 <a name='threads.dojob'/>
 ### Threads:dojob() ###
 This method is used to tell the main thread to execute the next 
@@ -263,6 +301,12 @@ no such job is available, the main thread of execution will wait (i.e. block)
 until the `mainthread` Worker (i.e. queue) is filled with a job. 
 Therefore, it is important that every call to `dojob` be preceded by 
 a call to `addjob`.
+
+<a name='threads.acceptsjobs'/>
+### Threads:acceptsjobs() ###
+This method returns true when the Threads pool can still accept jobs, 
+i.e. if the `threadworker` [Worker](#worker) (the thread-safe queue 
+of tasks to be executed by threads in the pool) isn't full.
 
 <a name='threads.synchronize'/>
 ### Threads:synchronize() ###
