@@ -22,9 +22,12 @@ set(luasrc
 add_torch_package(threads "${src}" "${luasrc}" "Threads")
 
 target_link_libraries(threads luaT TH)
+IF(LUALIB)
+  TARGET_LINK_LIBRARIES(threads ${LUALIB})
+ENDIF()
 
 if(WIN32)
-  add_definitions(-DUSE_WIN_THREADS=1)
+  add_definitions(-DUSE_WIN32_THREADS=1)
 else()
   set(CMAKE_THREAD_PREFER_PTHREAD)
   find_package(Threads REQUIRED)
