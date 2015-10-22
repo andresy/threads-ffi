@@ -270,7 +270,10 @@ function Threads:terminate()
       return
    end
 
-   -- terminate the threads
+   -- terminate user jobs
+   self:synchronize()
+
+   -- add jobs to terminate all threads
    for i=1,self.N do
       if self:specific() then
          self:addjob(
@@ -286,7 +289,7 @@ function Threads:terminate()
       end
    end
 
-   -- terminate all jobs
+   -- wait for all threads to terminate
    self:synchronize()
 
    -- wait for threads to exit (and free them)
