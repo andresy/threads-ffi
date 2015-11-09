@@ -163,10 +163,14 @@ function Threads:specific(flag)
    end
 end
 
-function Threads:dojob()
+function Threads:dojob(isnonblocking)
    checkrunning(self)
    local endcallbacks = self.endcallbacks
-   local callstatus, args, endcallbackid, threadid = self.mainqueue:dojob()
+   local callstatus, args, endcallbackid, threadid = self.mainqueue:dojob(isnonblocking)
+   if callstatus == nil then
+       return 0 
+   end
+
    if callstatus then
       local endcallstatus, msg = xpcall(
         function() return endcallbacks[endcallbackid](_unpack(args)) end,
@@ -179,6 +183,7 @@ function Threads:dojob()
    end
    endcallbacks[endcallbackid] = nil
    endcallbacks.n = endcallbacks.n - 1
+   return 1 
 end
 
 function Threads:acceptsjob(idx)
@@ -251,18 +256,22 @@ function Threads:hasjob()
    return self.endcallbacks.n > 0
 end
 
-function Threads:synchronize()
+function Threads:synchronize(isnonblocking)
    if not self:isrunning() then
       return
    end
-   while self:hasjob()do
-      self:dojob()
+   local jobdone = 0
+   local doneendcall = nil;
+   while self:hasjob() and doneendcall~=0 do
+      doneendcall= self:dojob(isnonblocking)
+      jobdone = jobdone + doneendcall
    end
    if self:haserror() then
       local msg = string.format('\n%s', table.concat(self.errors, '\n'))
       self.errors = {}
       error(msg)
    end
+   return jobdone
 end
 
 function Threads:terminate()

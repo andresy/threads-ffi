@@ -36,12 +36,17 @@ function Queue:addjob(callback, ...)
    end
 end
 
-function Queue:dojob()
+function Queue:dojob(isnonblocking)
    local status, msg = pcall(
       function()
          local serialize = require(self.serialize)
 
          self.mutex:lock()
+         if isnonblocking~=nil and isnonblocking and self.isempty == 1 then
+             self.mutex:unlock()
+             return {}
+         end
+
          while self.isempty == 1 do
             self.notempty:wait(self.mutex)
          end
