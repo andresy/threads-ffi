@@ -283,9 +283,10 @@ In this case a value of `1` is received by the main thread as argument `inc` to 
 This demonstrates how communication between threads is easily achieved using the `addjob` method.
 
 <a name='threads.dojob'/>
-#### Threads:dojob() ####
+#### Threads:dojob(isnonblocking=nil) ####
 This method is used to tell the main thread to execute the next `endcallback` in the queue (see [Threads:addjob](#threads.addjob)).
-If no such job is available, the main thread of execution will wait (i.e. block) until the `mainthread` Queue (i.e. queue) is filled with a job.
+If no such job is available, the main thread of execution will either `isnonblocking=nil|false` wait (i.e. block) until the `mainthread` Queue (i.e. queue) is filled with a job or 
+`isnonblocking=true` return imedidately. The return value indidate the number of jobs done (0 or 1). The default behavior is block waiting.
 
 In general, this method should not be called, except if one wants to use the [async capabilities](#threads.async) of the Threads class.
 Instead, [synchronize()](#threads.synchronize) should be called to make sure all jobs are executed.
@@ -299,9 +300,12 @@ specifically, it is thus important to check for errors with
 [synchronize()](#threads.synchronize) if a problem occurred.
 
 <a name='threads.synchronize'/>
-#### Threads:synchronize() ####
+#### Threads:synchronize(isnonblocking=nil) ####
 This method will call [dojob](#threads.dojob) until all `callbacks` and corresponding `endcallbacks` are executed on the queue and main threads, respectively.
 This method will also raise an error for any errors raised in the pool of queue threads.
+
+if `isnonblocking` is set to `true`, the method only synchronize those threads with finished `callbacks` and wait for their corresponding `endcallbacks` to finish.
+The returned integer indicate the number of threads synchronized.
 
 <a name='threads.terminate'/>
 #### Threads:terminate() ####
@@ -374,10 +378,12 @@ Both the `callback` function and `...` arguments are serialized before being *pu
 If the queue is full, i.e. it has more than `N` jobs, the calling thread will wait (i.e. block) until a job is retrieved by another thread.
 
 <a name='queue.dojob'/>
-#### [res] Queue:dojob() ####
+#### [res] Queue:dojob(isnonblocking=nil) ####
 This method is called by a thread to *get*, unserialize and execute a job inserted via [addjob](#queue.addjob) from the queue.
-A calling thread will wait (i.e. block) until a new job can be retrieved.
+A calling thread will wait (i.e. block) until a new job can be retrieved by default `isnonblocking=false|nil`.
 It returns to the calller whatever the job function returns after execution.
+
+Alternatively, when `isnonblocking=true`, it would return `nil` when the queue is empty.
 
 <a name='threads.serialize'/>
 ### Serialize ###

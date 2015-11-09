@@ -44,7 +44,7 @@ function Queue:dojob(isnonblocking)
          self.mutex:lock()
          if isnonblocking~=nil and isnonblocking and self.isempty == 1 then
              self.mutex:unlock()
-             return {}
+             return nil
          end
 
          while self.isempty == 1 do
