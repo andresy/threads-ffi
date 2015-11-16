@@ -20,6 +20,7 @@ THCondition* THCondition_new(void);
 THCondition* THCondition_newWithId(long id);
 long THCondition_id(THCondition *self);
 int THCondition_signal(THCondition *self);
+int THCondition_broadcast(THCondition *self);
 int THCondition_wait(THCondition *self, THMutex *mutex);
 void THCondition_free(THCondition *self);
 

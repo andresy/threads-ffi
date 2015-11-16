@@ -128,7 +128,8 @@ The library provides different low-level and high-level threading capabilities.
 
   * [Mid-level](#threads.midlevel):
     * [Threads](#threads.main): a thread pool ;
-    * [Queue](#queue): a thread-safe task queue ; and
+    * [Queue](#queue): a thread-safe task queue ;
+    * [Channel](#channel): a buffered queue for transmitting values between threads ; and
     * [serialize](#threads.serialize): functions for serialization and deserialization.
   * [Low-level](#threads.lowlevel):
     * [Thread](#thread): a single thread with no artifice ;
@@ -378,6 +379,62 @@ If the queue is full, i.e. it has more than `N` jobs, the calling thread will wa
 This method is called by a thread to *get*, unserialize and execute a job inserted via [addjob](#queue.addjob) from the queue.
 A calling thread will wait (i.e. block) until a new job can be retrieved.
 It returns to the calller whatever the job function returns after execution.
+
+<a name='channel'/>
+### Channel ###
+A `threads.Channel` is a buffered queue used to transmit values between threads.
+
+#### Channel(N) ####
+The Channel constructor takes a single argument `N` which specifies the size of the buffer. Sends on the channel
+will block while the channel is full, and receives block while the channel is empty. There are also non-blocking
+methods `Channel:isend` and `Channel:ireceive`.
+
+```lua
+ch = threads.Channel(1)
+
+t = threads.Threads(1)
+t:addjob(function()
+  ch:send('foo')
+  ch:send('bar')
+end)
+
+foo = ch:receive()
+bar = ch:receive()
+t:synchronize()
+```
+
+<a name='channel.send'/>
+#### Channel:send(value) ####
+Transmits a value on the channel. This method will block if the channel is full. It is an error to send on a closed channel.
+
+<a name='channel.receive'/>
+#### [res, ok] Channel:receive() ####
+Retrieves a value from the channel. This method will block until the channel contains a value, or the channel is closed.
+
+<a name='channel.isend'/>
+#### [ok] Channel:isend(value) ####
+Immediately sends a value on the channel, if the channel is not full. If the channel is full, this method returns `false`
+and no value is sent.
+
+<a name='channel.ireceive'/>
+#### [res, ok] Channel:ireceive() ####
+Immediately receives a value from the channel. If the channel is not empty, this returns the received value and true.
+Otherwise, returns `nil, false`.
+
+<a name='channel.values'/>
+#### [itr] Channel:values() ####
+Returns a blocking iterator that generates the channel's values until the channel is closed or a `nil` is received.
+
+```lua
+for res in ch:values() do
+  print(res)
+end
+```
+
+<a name='channel.close'/>
+#### Channel:close() ####
+Marks the channel as closed. Receives will immediately return nil, false. Sends on this channel will trigger an error.
+It is not necessary to close a channel.
 
 <a name='threads.serialize'/>
 ### Serialize ###

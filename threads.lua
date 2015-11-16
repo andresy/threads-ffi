@@ -59,6 +59,7 @@ function Threads.new(N, ...)
          string.format(
             [[
   local Queue = require 'threads.queue'
+  require 'threads.channel'
   __threadid = %d
   local mainqueue = Queue(%d)
   local threadqueue = Queue(%d)
