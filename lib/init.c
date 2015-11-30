@@ -20,7 +20,12 @@ static void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup)
 #include "threads.c"
 #include "queue.c"
 
-int luaopen_libthreads(lua_State *L)
+#if defined(_WIN32)
+    #define THREADS_DLLEXPORT __declspec(dllexport) __cdecl
+#else
+    #define THREADS_DLLEXPORT 
+#endif
+int THREADS_DLLEXPORT luaopen_libthreads(lua_State *L)
 {
   lua_newtable(L);
   thread_init_pkg(L);

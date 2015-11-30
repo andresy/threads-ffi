@@ -9,6 +9,10 @@
 #include <lua.h>
 #include <lualib.h>
 
+#if defined(_MSC_VER)
+#define snprintf _snprintf
+#endif
+
 static int newthread(void *code_)
 {
   char *code = code_;
