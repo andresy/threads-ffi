@@ -25,11 +25,13 @@ static void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup)
 
 #include "threads.c"
 #include "queue.c"
+#include "channel.c"
 
 int luaopen_libthreads(lua_State *L)
 {
   lua_newtable(L);
   thread_init_pkg(L);
   queue_init_pkg(L);
+  channel_init_pkg(L);
   return 1;
 }

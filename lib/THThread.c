@@ -78,6 +78,11 @@ int pthread_cond_signal(pthread_cond_t *cond)
   return SetEvent(*cond) == 0;
 }
 
+int pthread_cond_broadcast(pthread_cond_t *cond)
+{
+  return SetEvent(*cond) == 0;
+}
+
 #else
 #error no thread system available
 #endif
@@ -208,6 +213,13 @@ long THCondition_id(THCondition *self)
 int THCondition_signal(THCondition *self)
 {
   if(pthread_cond_signal(&self->id))
+    return 1;
+  return 0;
+}
+
+int THCondition_broadcast(THCondition *self)
+{
+  if(pthread_cond_broadcast(&self->id))
     return 1;
   return 0;
 }

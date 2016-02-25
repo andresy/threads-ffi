@@ -5,6 +5,7 @@ local C = require 'libthreads'
 threads.Thread = C.Thread
 threads.Mutex = C.Mutex
 threads.Condition = C.Condition
+threads.Channel = require 'threads.channel'
 threads.Threads = require 'threads.threads'
 
 -- only for backward compatibility (boo)

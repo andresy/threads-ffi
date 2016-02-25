@@ -17,6 +17,7 @@ set(luasrc
   serialize.lua
   sharedserialize.lua
   queue.lua
+  channel.lua
 )
 
 add_torch_package(threads "${src}" "${luasrc}" "Threads")
