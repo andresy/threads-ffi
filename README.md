@@ -117,6 +117,77 @@ task 7 finished (ran on thread ID 1)
 10 jobs done
 ```
 
+An example of shared Tensors across threads.
+Notice that you have to make sure a thread retains ownership of the original tensor (in this case, the main thread). 
+
+```lua
+require 'torch'
+local Threads=require 'threads'
+Threads.serialization('threads.sharedserialize') -- automatically shares tensors that are sent over to workers
+nWorkers = 9
+ 
+local function initThreads(idx)
+   require 'torch';
+   local Threads = require 'threads';
+   Threads.serialization('threads.sharedserialize')
+   threadIdx = idx
+end
+workers = Threads(nWorkers, initThreads)
+ 
+ 
+ 
+local myTensor = torch.randn(10, 5)
+print('Original tensor:')
+print(myTensor)
+ 
+local function eraseRow(t, i)
+   print('Erasing row:', i,' in thread :', threadIdx)
+   t[i]:fill(0)
+end
+ 
+for i=1,5 do
+   workers:addjob(eraseRow, function() end, myTensor, i)
+end
+workers:synchronize()
+ 
+print('Final tensor:')
+print(myTensor)
+```
+
+Typical output:
+```
+Original tensor:
+ 0.2786  1.2893 -1.8706 -0.8939 -1.3300
+ 0.4061 -0.8993  1.1076 -1.6491  0.5379
+-1.4705 -0.3187  0.7257 -0.6896 -0.3942
+ 0.7603 -1.9856  0.3311 -3.1618  2.0269
+-0.9455  0.7976  0.5956 -1.6802  0.0373
+-1.6275  1.5458 -0.5579  0.0518 -0.8174
+ 1.2963  0.0170 -0.3969  1.6040  0.1659
+-0.5587 -1.3798 -1.6405 -0.1883  0.6939
+-0.0808 -0.5508 -0.2113 -1.2829  1.8423
+ 0.1939 -0.8549 -0.0724  1.7494  0.7187
+[torch.DoubleTensor of size 10x5]
+
+Erasing row:	1	 in thread :	1
+Erasing row:	2	 in thread :	2
+Erasing row:	3	 in thread :	3
+Erasing row:	4	 in thread :	4
+Erasing row:	5	 in thread :	5
+Final tensor:
+ 0.0000  0.0000  0.0000  0.0000  0.0000
+ 0.0000  0.0000  0.0000  0.0000  0.0000
+ 0.0000  0.0000  0.0000  0.0000  0.0000
+ 0.0000  0.0000  0.0000  0.0000  0.0000
+ 0.0000  0.0000  0.0000  0.0000  0.0000
+-1.6275  1.5458 -0.5579  0.0518 -0.8174
+ 1.2963  0.0170 -0.3969  1.6040  0.1659
+-0.5587 -1.3798 -1.6405 -0.1883  0.6939
+-0.0808 -0.5508 -0.2113 -1.2829  1.8423
+ 0.1939 -0.8549 -0.0724  1.7494  0.7187
+[torch.DoubleTensor of size 10x5]
+```
+
 ## Advanced Example ##
 
 See a neural network [threaded training example](benchmark/README.md) for a more advanced usage of `threads`.
