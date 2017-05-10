@@ -486,6 +486,11 @@ has been raised.
 
 Raise the condition signal.
 
+<a name='condition.broadcast'/>
+#### Condition.broadcast() ####
+
+Broadcast the condition signal to all waiting threads.
+
 <a name='condition.free'/>
 #### Condition.free() ####
 
