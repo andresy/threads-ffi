@@ -216,6 +216,13 @@ int THCondition_signal(THCondition *self)
   return 0;
 }
 
+int THCondition_broadcast(THCondition *self)
+{
+  if(pthread_cond_broadcast(&self->id))
+    return 1;
+  return 0;
+}
+
 int THCondition_wait(THCondition *self, THMutex *mutex)
 {
   if(pthread_cond_wait(&self->id, &mutex->id))

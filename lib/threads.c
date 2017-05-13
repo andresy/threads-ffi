@@ -195,6 +195,14 @@ static int condition_signal(lua_State *L)
   return 0;
 }
 
+static int condition_broadcast(lua_State *L)
+{
+  THCondition *condition = luaTHRD_checkudata(L, 1, "threads.Condition");
+  if(THCondition_broadcast(condition))
+    luaL_error(L, "threads: condition signal failed");
+  return 0;
+}
+
 static int condition_wait(lua_State *L)
 {
   THCondition *condition = luaTHRD_checkudata(L, 1, "threads.Condition");
@@ -227,6 +235,7 @@ static const struct luaL_Reg condition__ [] = {
   {"__tostring", condition_tostring},
   {"id", condition_id},
   {"signal", condition_signal},
+  {"broadcast", condition_broadcast},
   {"wait", condition_wait},
   {"free", condition_free},
   {NULL, NULL}
